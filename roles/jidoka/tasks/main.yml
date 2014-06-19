@@ -1,61 +1,98 @@
 ---
 
 - name: Install Homebrew
-  action: "shell ruby -e '$(curl -fsSL https://raw.github.com/Homebrew/homebrew/go/install)' creates=/usr/local/bin/brew"
+  action: "shell ruby -e $(curl -fsSL https://raw.github.com/Homebrew/homebrew/go/install) creates=/usr/local/bin/brew"
   register: brew_install
-
-# - name: Update Homebrew
-# when: brew_install is defined
-# action: homebrew update_homebrew=yes name=*
 
 - name: Install brews
   action: homebrew state=installed
-    name='zsh,zsh-completions,git,vim,curl,wget,tmux,jq'
+    name='zsh,zsh-completions,git,vim,curl,wget,tmux,jq,mercurial'
   register: install_brews
 
-- name: Change shell to zsh
-  action: command chsh -s /usr/local/bin/zsh
-  failed_when: false
-
-# Grab ZSH configs
-- name: Grab dot files
-  action: get_url url={{ item.url }} dest={{ item.dest }}
+- name: python pip
+  action: pip name={{ item }} state=present
   with_items:
-  - { url: 'https://raw.githubusercontent.com/joethemongoose/Dotfiles/master/zfunctions',   dest: '~/.zfunctions' }
-  - { url: 'https://raw.githubusercontent.com/joethemongoose/Dotfiles/master/zlogin-osx',   dest: '~/.zlogin' }
-  - { url: 'https://raw.githubusercontent.com/joethemongoose/Dotfiles/master/zprofile-osx', dest: '~/.zprofile' }
-  - { url: 'https://raw.githubusercontent.com/joethemongoose/Dotfiles/master/zshenv-osx',   dest: '~/.zshenv' }
-  - { url: 'https://raw.githubusercontent.com/joethemongoose/Dotfiles/master/zshrc-osx',    dest: '~/.zshrc' }
-  - { url: 'https://raw.githubusercontent.com/joethemongoose/Dotfiles/master/zshrc.zni',    dest: '~/.zsh.zni' }
-  - { url: 'https://raw.githubusercontent.com/joethemongoose/Dotfiles/master/tmux.conf',    dest: '~/.tmux.conf' }
-  - { url: 'https://raw.githubusercontent.com/joethemongoose/Dotfiles/master/.vimrc.after', dest: '~/.vimrc.after' }
+      - virtualenv
+      - virtualenv-clone
+      - virtualenvwrapper
+
+# Grab Dotfiles
+- name: Grab dot files
+  action: get_url url={{ item.url }} dest={{ item.dest }} force=yes
+  with_items:
+  - { url: 'https://raw.githubusercontent.com/joethemongoose/Dotfiles/master/zfunctions',   dest: '~/.zfunctions'  }
+  - { url: 'https://raw.githubusercontent.com/joethemongoose/Dotfiles/master/zshenv-osx',   dest: '~/.zshenv'      }
+  - { url: 'https://raw.githubusercontent.com/joethemongoose/Dotfiles/master/zshrc-osx',    dest: '~/.zshrc'       }
+  - { url: 'https://raw.githubusercontent.com/joethemongoose/Dotfiles/master/zshrc.zni',    dest: '~/.zsh.zni'     }
+  - { url: 'https://raw.githubusercontent.com/joethemongoose/Dotfiles/master/tmux.conf',    dest: '~/.tmux.conf'   }
+  - { url: 'https://raw.githubusercontent.com/joethemongoose/Dotfiles/master/vimrc.after',  dest: '~/.vimrc.after' }
+
+- name: Whoami
+  action: command whoami
+  register: whoami
+  changed_when: False
+
+- name: Change shell to zsh
+  sudo: yes
+  action: command chsh -s /usr/local/bin/zsh {{ whoami.stdout }}
+  register: changed_shell
+  changed_when: not changed_shell.stderr.find("no changes made")
 
 # install antigen
 - name: get antigen
-  action: git repo=https://github.com/zsh-users/antigen.git dest=~/.antigen update=yes
+  action: git repo=https://github.com/zsh-users/antigen.git dest=~/.antigen
 
-# install janus
+# RVM
+- name: install rvm
+  action: "shell $(curl -sSL https://get.rvm.io | bash -s stable --ignore-dotfiles --ruby --autolibs=4) creates=~/.rvm"
+  register: rvm_install
+
+- name: update rvm
+  when: rvm_install|skipped
+  action: shell rvm get stable
+
+- name: install ruby version {{ ruby_version }}
+  action: shell rvm install --default {{ ruby_version }} creates=~/.rvm/rubies/ruby-{{ ruby_version }}
+
+# NVM
+- name: clone nvm
+  action: git repo=https://github.com/creationix/nvm.git dest=~/.nvm
+
+- name: install nodejs version {{ node_version }}
+  action: "shell source $HOME/.nvm/nvm.sh && nvm install {{ node_version }} creates=~/.nvm/{{ node_version }}"
+
+- name: make nodejs default
+  action: "shell source $HOME/.nvm/nvm.sh && nvm alias default {{ node_version }}"
+
+# GVM
+- name: install gvm wrapper
+  action: "shell executable=/bin/bash $(curl -sSL https://raw.githubusercontent.com/moovweb/gvm/master/binscripts/gvm-installer | bash creates=~/.gvm"
+  ignore_errors: yes
+
+#     - name: clone gvm
+#       action: git repo=https://github.com/moovweb/gvm.git dest=~/.gvm
+#       register: gvm_clone
+#     - name: configure gvm
+#       when: gvm_clone.changed
+#       action: shell chdir=~/.gvm ./autogen.sh --prefix=$HOME -q
+#     - name: fix script/gvm
+#       when: gvm_clone.changed
+#       action: lineinfile dest=~/.gvm/scripts/gvm line="{{ item }}"
+#       with_items:
+#       - 'export GVM_ROOT=/Users/{{ whoami.stdout }}/.gvm'
+#       - '. $GVM_ROOT/scripts/gvm-default'
+
+- name: install gvm version {{ golang_version }}
+  action: "shell source $HOME/.gvm/scripts/gvm && gvm install go{{ golang_version }} creates=~/.gvm/gos/go{{ golang_version }}"
+
+- name: make gvm default
+  action: "shell source $HOME/.gvm/scripts/gvm && gvm use go{{ golang_version }} --default"
+
+ # install janus
 - name: install janus
-  action: "shell $(curl -Lo- https://bit.ly/janus-bootstrap | bash) creates=~/.vim"
+  action: "shell $(curl -Lo- https://bit.ly/janus-bootstrap | /bin/bash ) creates=~/.vim/janus"
   register: janus_install
 
 - name: update janus
-  when: janus_install.changed is not defined
-  action: shell chdir=~/.vim rake && rake
-
-# RVM
-- name: Install RVM
-  action: "shell creates=~/.rvm $(curl -sSL https://get.rvm.io | bash -s stable --ruby --with-gems='bundler' --autolibs=3)"
-  register: rvm_install
-
-- name: Update RVM
-  when: rvm_install.changed is not defined
-  action: "shell rvm get stable"
-
-# NVM
-- name: install nvm
-  action: git repo=https://github.com/creationix/nvm.git dest=~/.nvm update=yes
-
-# GVM
-- name: install gvm
-  action: "shell $(curl -sSL https://raw.githubusercontent.com/moovweb/gvm/master/binscripts/gvm-installer | bash ) create=~/.gvm"
+  when: janus_install|skipped
+  action: "shell chdir=~/.vim rake -s"

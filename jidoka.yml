@@ -1,10 +1,7 @@
 ---
 - name: jidoka
-  vars_prompt:
-    user: 'please enter your user'
   hosts: localhost
   connection: local
   sudo: no
-  user: "{{ user }}"
   roles:
     - { role: 'jidoka' }
