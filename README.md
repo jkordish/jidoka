@@ -1,6 +1,22 @@
 jidoka
 ======
 
+# Wut?
+
+The following [Ansible](https://github.com/ansible/ansible) playbook does the following:
+
+1. Installs [Homebrew](http://brew.sh/)
+1. Installs some brews:
+  * [tmux](http://tmux.sourceforge.net/) - terminal multiplexer
+  * [vim](http://www.vim.org/) - text editing
+  * [zsh](http://www.zsh.org/) - system shell
+1. Grabs the latest dotfiles from my github [joethemongoose](https://github.com/joethemongoose/dotfiles)
+1. Changes default shell to [zsh](http://www.zsh.org/)
+1. Installs [Antigen](https://github.com/zsh-users/antigen) for zsh fun
+1. Installs [RVM](https://rvm.io/rvm) - Ruby management
+1. Installs [NVM](https://github.com/creationix/nvm) - NodeJS management
+1. Installs [GVM](https://github.com/moovweb/gvm) - GoLang management
+
 ## Prereq
 Ensure the OSX Xcode command line tools are installed
 
