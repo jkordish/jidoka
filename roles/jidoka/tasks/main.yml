@@ -44,69 +44,68 @@
 
 # RVM
 - name: install rvm
-  action: "shell $(curl -sSL https://get.rvm.io | bash -s stable --ignore-dotfiles --ruby --autolibs=4) creates=~/.rvm"
+  action: "shell curl -sSL https://get.rvm.io | /bin/bash -s stable --ruby={{ ruby_version }} --ignore-dotfiles --autolibs=4 creates=~/.rvm"
   register: rvm_install
 
+- name: evaulate rvm version
+  action: "shell executable=/usr/local/bin/zsh rvm --version | awk 'FNR == 2 {print $2}'"
+  register: rvm_version
+  changed_when: false
+
+- name: evaulate latest stable avaiable
+  action: command curl -sSL https://raw.github.com/wayneeseguin/rvm/stable/VERSION
+  register: rvm_version_avaiable
+  changed_when: false
+
 - name: update rvm
-  when: rvm_install|skipped
-  action: shell rvm get stable
+  when: rvm_version_avaiable.stdout != rvm_version.stdout
+  action: shell executable=/usr/local/bin/zsh rvm get stable --ignore-dotfiles --autolibs=4 && rvm
 
 - name: install ruby version {{ ruby_version }}
-  action: shell rvm install --default {{ ruby_version }} creates=~/.rvm/rubies/ruby-{{ ruby_version }}
+  when: rvm_install|skipped
+  action: shell executable=/usr/local/bin/zsh rvm install --default {{ ruby_version }} creates=~/.rvm/rubies/ruby-{{ ruby_version }}
 
 # NVM
 - name: clone nvm
   action: git repo=https://github.com/creationix/nvm.git dest=~/.nvm
 
 - name: install nodejs version {{ node_version }}
-  action: "shell source $HOME/.nvm/nvm.sh && nvm install {{ node_version }} creates=~/.nvm/{{ node_version }}"
+  action: shell executable=/usr/local/bin/zsh nvm install {{ node_version }} creates=~/.nvm/{{ node_version }}
 
 - name: check nvm alias
-  action: "shell source $HOME/.nvm/nvm.sh && nvm alias"
+  action: shell executable=/usr/local/bin/zsh nvm alias
   register: nvm_alias
   changed_when: false
 
 - name: make nodejs default
-  action: "shell source $HOME/.nvm/nvm.sh && nvm alias default {{ node_version }}"
+  action: shell executable=/usr/local/bin/zsh nvm alias default {{ node_version }}
   register: nvm_default
   changed_when: not nvm_default.stdout.find("{{ nvm_alias }}")
 
 # GVM
 - name: install gvm wrapper
-  action: "shell executable=/bin/bash $(curl -sSL https://raw.githubusercontent.com/moovweb/gvm/master/binscripts/gvm-installer | bash creates=~/.gvm"
+  action: "shell executable=/usr/local/bin/zsh curl -sSL https://raw.githubusercontent.com/moovweb/gvm/master/binscripts/gvm-installer | /bin/bash creates=~/.gvm"
   ignore_errors: yes
 
-#     - name: clone gvm
-#       action: git repo=https://github.com/moovweb/gvm.git dest=~/.gvm
-#       register: gvm_clone
-#     - name: configure gvm
-#       when: gvm_clone.changed
-#       action: shell chdir=~/.gvm ./autogen.sh --prefix=$HOME -q
-#     - name: fix script/gvm
-#       when: gvm_clone.changed
-#       action: lineinfile dest=~/.gvm/scripts/gvm line="{{ item }}"
-#       with_items:
-#       - 'export GVM_ROOT=/Users/{{ whoami.stdout }}/.gvm'
-#       - '. $GVM_ROOT/scripts/gvm-default'
-
 - name: install gvm version {{ golang_version }}
-  action: "shell source $HOME/.gvm/scripts/gvm && gvm install go{{ golang_version }} creates=~/.gvm/gos/go{{ golang_version }}"
+  action: shell executable=/usr/local/bin/zsh gvm install go{{ golang_version }} creates=~/.gvm/gos/go{{ golang_version }}
 
 - name: check gvm alias
-  action: "shell source $HOME/.gvm/scripts/gvm  && gvm list"
+  action: shell executable=/usr/local/bin/zsh gvm list
   register: gvm_alias
   changed_when: false
 
 - name: make gvm default
-  action: "shell source $HOME/.gvm/scripts/gvm && gvm use go{{ golang_version }} --default"
+  action: shell executable=/usr/local/bin/zsh gvm use go{{ golang_version }} --default
   register: gvm_default
   changed_when: not gvm_default.stdout.find("{{ gvm_alias.stdout.find("=>") }}")
 
- # install janus
-- name: install janus
-  action: "shell $(curl -Lo- https://bit.ly/janus-bootstrap | /usr/local/bin/zsh ) creates=~/.vim/janus"
-  register: janus_install
+# Janus
+- name: get janus
+  action: git repo=https://github.com/carlhuda/janus.git dest=~/.vim
+  register: get_janus
+  changed_when: get_janus.before != get_janus.after
 
 - name: update janus
-  when: janus_install|skipped
-  action: "shell chdir=~/.vim rake -s"
+  when: get_janus.changed
+  action: shell executable=/usr/local/bin/zsh chdir=~/.vim rake default -qs
