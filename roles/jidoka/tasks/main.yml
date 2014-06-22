@@ -61,8 +61,15 @@
 - name: install nodejs version {{ node_version }}
   action: "shell source $HOME/.nvm/nvm.sh && nvm install {{ node_version }} creates=~/.nvm/{{ node_version }}"
 
+- name: check nvm alias
+  action: "shell source $HOME/.nvm/nvm.sh && nvm alias"
+  register: nvm_alias
+  changed_when: false
+
 - name: make nodejs default
   action: "shell source $HOME/.nvm/nvm.sh && nvm alias default {{ node_version }}"
+  register: nvm_default
+  changed_when: not nvm_default.stdout.find("{{ nvm_alias }}")
 
 # GVM
 - name: install gvm wrapper
@@ -85,12 +92,19 @@
 - name: install gvm version {{ golang_version }}
   action: "shell source $HOME/.gvm/scripts/gvm && gvm install go{{ golang_version }} creates=~/.gvm/gos/go{{ golang_version }}"
 
+- name: check gvm alias
+  action: "shell source $HOME/.gvm/scripts/gvm  && gvm list"
+  register: gvm_alias
+  changed_when: false
+
 - name: make gvm default
   action: "shell source $HOME/.gvm/scripts/gvm && gvm use go{{ golang_version }} --default"
+  register: gvm_default
+  changed_when: not gvm_default.stdout.find("{{ gvm_alias.stdout.find("=>") }}")
 
  # install janus
 - name: install janus
-  action: "shell $(curl -Lo- https://bit.ly/janus-bootstrap | /bin/bash ) creates=~/.vim/janus"
+  action: "shell $(curl -Lo- https://bit.ly/janus-bootstrap | /usr/local/bin/zsh ) creates=~/.vim/janus"
   register: janus_install
 
 - name: update janus
