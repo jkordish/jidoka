@@ -107,5 +107,5 @@
   changed_when: get_janus.before != get_janus.after
 
 - name: update janus
-  when: get_janus.changed
+  when: '(get_janus.changed and get_janus.before is string)'
   action: shell executable=/usr/local/bin/zsh chdir=~/.vim rake default -qs
