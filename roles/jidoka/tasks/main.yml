@@ -27,14 +27,10 @@
   - { url: 'https://raw.githubusercontent.com/joethemongoose/Dotfiles/master/tmux.conf',    dest: '~/.tmux.conf'   }
   - { url: 'https://raw.githubusercontent.com/joethemongoose/Dotfiles/master/vimrc.after',  dest: '~/.vimrc.after' }
 
-- name: Whoami
-  action: command whoami
-  register: whoami
-  changed_when: False
-
 - name: Change shell to zsh
   sudo: yes
-  action: command chsh -s /usr/local/bin/zsh {{ whoami.stdout }}
+  when: lookup('env','SHELL') != "/usr/local/bin/zsh"
+  action: command chsh -s /usr/local/bin/zsh "{{ lookup('env', 'USER') }}"
   register: changed_shell
   changed_when: not changed_shell.stderr.find("no changes made")
 
