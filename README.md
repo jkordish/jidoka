@@ -34,7 +34,7 @@ Installing Ansible should be as easy as
 
 ## Running
 
-    ansible-playbook jidoka.yml -K -i hosts
+    ansible-playbook jidoka.yml -K
 
 ### config
 
