@@ -39,4 +39,5 @@ Installing Ansible should be as easy as
 ### config
 
 The only real configuration options avaiable are the versions of the node/ruby/go to be installed. They can be changed by editing 
+
     roles/jidoka/vars/main.yml.
