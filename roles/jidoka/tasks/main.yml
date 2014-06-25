@@ -9,6 +9,10 @@
     name='zsh,zsh-completions,git,vim,curl,wget,tmux,jq,mercurial'
   register: install_brews
 
+- name: update brews
+  action: shell brew update && brew upgrade -f
+  when: brew_install|skipped
+
 - name: python pip
   action: pip name={{ item }} state=present
   with_items:
@@ -23,7 +27,7 @@
   - { url: 'https://raw.githubusercontent.com/joethemongoose/Dotfiles/master/zfunctions',   dest: '~/.zfunctions'  }
   - { url: 'https://raw.githubusercontent.com/joethemongoose/Dotfiles/master/zshenv-osx',   dest: '~/.zshenv'      }
   - { url: 'https://raw.githubusercontent.com/joethemongoose/Dotfiles/master/zshrc-osx',    dest: '~/.zshrc'       }
-  - { url: 'https://raw.githubusercontent.com/joethemongoose/Dotfiles/master/zshrc.zni',    dest: '~/.zshrc.zni'     }
+  - { url: 'https://raw.githubusercontent.com/joethemongoose/Dotfiles/master/zshrc.zni',    dest: '~/.zshrc.zni'   }
   - { url: 'https://raw.githubusercontent.com/joethemongoose/Dotfiles/master/tmux.conf',    dest: '~/.tmux.conf'   }
   - { url: 'https://raw.githubusercontent.com/joethemongoose/Dotfiles/master/vimrc.after',  dest: '~/.vimrc.after' }
 
@@ -40,12 +44,12 @@
 
 # RVM
 - name: install rvm
-  action: "shell curl -sSL https://get.rvm.io | /bin/bash --quiet-curl -s stable --ruby={{ ruby_version }} --ignore-dotfiles --autolibs=4 creates=~/.rvm"
+  action: "shell curl -sSL https://get.rvm.io | /bin/bash -s stable --ruby={{ ruby_version }} --ignore-dotfiles --autolibs=4 creates=~/.rvm"
   register: rvm_install
 
 - name: update rvm
   when: lookup('pipe',"PATH=$GEM_HOME/bin:$HOME/.rvm/bin:$PATH rvm --version | awk 'FNR == 2 {print $2}'") != lookup('pipe','curl -sSL https://raw.github.com/wayneeseguin/rvm/stable/VERSION')
-  action: shell executable=/usr/local/bin/zsh rvm --quiet-curl get stable --ignore-dotfiles --autolibs=4 && rvm
+  action: shell executable=/usr/local/bin/zsh rvm get stable --ignore-dotfiles --autolibs=4 && rvm
 
 - name: install ruby version {{ ruby_version }}
   when: rvm_install|skipped
