@@ -10,8 +10,13 @@
   register: install_brews
 
 - name: update brews
-  action: shell brew update && brew upgrade -f
   when: brew_install|skipped
+  action: command brew {{ item }}
+  with_items:
+  - 'update'
+  - 'upgrade -f'
+  register: update_brews
+  changed_when: not update_brews.stdout.find('up-to-date')
 
 - name: python pip
   action: pip name={{ item }} state=present
