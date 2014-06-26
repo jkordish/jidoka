@@ -1,5 +1,5 @@
 ---
-
+# Homebrew work
 - name: Install Homebrew
   action: "shell ruby -e $(curl -fsSL https://raw.github.com/Homebrew/homebrew/go/install) creates=/usr/local/bin/brew"
   register: brew_install
@@ -7,16 +7,18 @@
 - name: Install brews
   action: homebrew state=installed
     name='zsh,zsh-completions,git,vim,curl,wget,tmux,jq,mercurial'
-  register: install_brews
+
+- name: update homebrew
+  when: brew_install|skipped
+  action: command brew update
+  register: update_homebrew
+  changed_when: update_homebrew.stdout.find("Already up-to-date.")
 
 - name: update brews
-  when: brew_install|skipped
-  action: command brew {{ item }}
-  with_items:
-  - 'update'
-  - 'upgrade -f'
+  when: update_homebrew.changed
+  action: command brew upgrade -f
   register: update_brews
-  changed_when: not update_brews.stdout.find('up-to-date')
+  changed_when: update_brews.stdout != ''
 
 - name: python pip
   action: pip name={{ item }} state=present
