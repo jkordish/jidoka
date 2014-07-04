@@ -1,7 +1,7 @@
 jidoka
 ======
 
-# Wut?
+# Wut? #
 
 The following [Ansible](https://github.com/ansible/ansible) playbook does the following:
 
@@ -21,7 +21,7 @@ The following [Ansible](https://github.com/ansible/ansible) playbook does the fo
 1. Installs [GVM](https://github.com/moovweb/gvm) - GoLang management
 1. Installs [Janus](https://github.com/carlhuda/janus) - VIM plugin management plus defaults
 
-## Prereq
+## Prereq ##
 Ensure the OSX Xcode command line tools are installed
 
 1. Do it maually
@@ -30,22 +30,26 @@ Ensure the OSX Xcode command line tools are installed
 
 1. Automate it [here](https://gist.github.com/d7an/9756475)
 
-### Install Ansible
+### Install Ansible ###
 
 Installing Ansible should be as easy as
 
     pip install -U ansible
 
-## Running
+## Running ##
 
     ansible-playbook jidoka.yml -K
 
-### config
+### config ###
 
 The only real configuration options avaiable are the versions of the node/ruby/go to be installed. They can be changed by editing 
 
     roles/jidoka/vars/main.yml.
 
-### todo
+### todo ###
 
 1. need to make more components selectable such as the antigen modules
+
+#### contact ####
+
+Questions/Comments/Priases can be sent to me at <joe@unicornclouds.com>
