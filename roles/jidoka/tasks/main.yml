@@ -20,6 +20,12 @@
   register: update_brews
   changed_when: update_brews.stdout != ''
 
+- name: homebrew tap cask
+  action: command brew tap caskroom/cask
+
+- name: homebrew install cask
+  action: command brew install brew-cask
+
 - name: python pip
   action: pip name={{ item }} state=present
   with_items:
