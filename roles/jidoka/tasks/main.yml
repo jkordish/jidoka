@@ -1,33 +1,33 @@
 ---
 # Homebrew work
 - name: Install Homebrew
-  action: "shell ruby -e $(curl -fsSL https://raw.github.com/Homebrew/homebrew/go/install) creates=/usr/local/bin/brew"
+  local_action: "shell ruby -e $(curl -fsSL https://raw.github.com/Homebrew/homebrew/go/install) creates=/usr/local/bin/brew"
   register: brew_install
 
 - name: Install brews
-  action: homebrew state=installed
+  local_action: homebrew state=installed
     name='zsh,zsh-completions,git,vim,curl,wget,tmux,jq,mercurial'
 
 - name: update homebrew
   when: brew_install|skipped
-  action: command brew update
+  local_action: command brew update
   register: update_homebrew
   changed_when: update_homebrew.stdout.find("Already up-to-date.")
 
 - name: update brews
   when: update_homebrew.changed
-  action: command brew upgrade -f
+  local_action: command brew upgrade -f
   register: update_brews
   changed_when: update_brews.stdout != ''
 
 - name: homebrew tap cask
-  action: command brew tap caskroom/cask
+  local_action: command brew tap caskroom/cask
 
 - name: homebrew install cask
-  action: command brew install brew-cask
+  local_action: command brew install brew-cask
 
 - name: python pip
-  action: pip name={{ item }} state=present
+  local_action: pip name={{ item }} state=present
   with_items:
       - virtualenv
       - virtualenv-clone
@@ -35,7 +35,7 @@
 
 # Grab Dotfiles
 - name: Grab dot files
-  action: get_url url={{ item.url }} dest={{ item.dest }} force=yes
+  local_action: get_url url={{ item.url }} dest={{ item.dest }} force=yes
   with_items:
   - { url: 'https://raw.githubusercontent.com/joethemongoose/Dotfiles/master/zfunctions',   dest: '~/.zfunctions'  }
   - { url: 'https://raw.githubusercontent.com/joethemongoose/Dotfiles/master/zshenv-osx',   dest: '~/.zshenv'      }
@@ -47,68 +47,68 @@
 - name: Change shell to zsh
   sudo: yes
   when: lookup('env','SHELL') != "/usr/local/bin/zsh"
-  action: command chsh -s /usr/local/bin/zsh "{{ lookup('env', 'USER') }}"
+  local_action: command chsh -s /usr/local/bin/zsh "{{ lookup('env', 'USER') }}"
   register: changed_shell
   changed_when: not changed_shell.stderr.find("no changes made")
 
 # install antigen
 - name: get antigen
-  action: git repo=https://github.com/zsh-users/antigen.git dest=~/.antigen
+  local_action: git repo=https://github.com/zsh-users/antigen.git dest=~/.antigen
 
 # RVM
 - name: install rvm
-  action: "shell curl -sSL https://get.rvm.io | /bin/bash -s stable --ruby={{ ruby_version }} --ignore-dotfiles --autolibs=4 creates=~/.rvm"
+  local_action: "shell curl -sSL https://get.rvm.io | /bin/bash -s stable --ruby={{ ruby_version }} --ignore-dotfiles --autolibs=4 creates=~/.rvm"
   register: rvm_install
 
 - name: update rvm
   when: lookup('pipe',"PATH=$GEM_HOME/bin:$HOME/.rvm/bin:$PATH rvm --version | awk 'FNR == 2 {print $2}'") != lookup('pipe','curl -sSL https://raw.github.com/wayneeseguin/rvm/stable/VERSION')
-  action: shell executable=/usr/local/bin/zsh rvm get stable --ignore-dotfiles --autolibs=4 && rvm
+  local_action: shell executable=/usr/local/bin/zsh rvm get stable --ignore-dotfiles --autolibs=4 && rvm
 
 - name: install ruby version {{ ruby_version }}
   when: rvm_install|skipped
-  action: shell executable=/usr/local/bin/zsh rvm install --default {{ ruby_version }} creates=~/.rvm/rubies/ruby-{{ ruby_version }}
+  local_action: shell executable=/usr/local/bin/zsh rvm install --default {{ ruby_version }} creates=~/.rvm/rubies/ruby-{{ ruby_version }}
 
 # NVM
 - name: clone nvm
-  action: git repo=https://github.com/creationix/nvm.git dest=~/.nvm
+  local_action: git repo=https://github.com/creationix/nvm.git dest=~/.nvm
 
 - name: install nodejs version {{ node_version }}
-  action: shell executable=/usr/local/bin/zsh nvm install {{ node_version }} creates=~/.nvm/{{ node_version }}
+  local_action: shell executable=/usr/local/bin/zsh nvm install {{ node_version }} creates=~/.nvm/{{ node_version }}
 
 - name: check nvm alias
-  action: shell executable=/usr/local/bin/zsh nvm alias
+  local_action: shell executable=/usr/local/bin/zsh nvm alias
   register: nvm_alias
   changed_when: false
 
 - name: make nodejs default
-  action: shell executable=/usr/local/bin/zsh nvm alias default {{ node_version }}
+  local_action: shell executable=/usr/local/bin/zsh nvm alias default {{ node_version }}
   register: nvm_default
   changed_when: not nvm_default.stdout.find("{{ nvm_alias }}")
 
 # GVM
 - name: install gvm wrapper
-  action: "shell executable=/usr/local/bin/zsh curl -sSL https://raw.githubusercontent.com/moovweb/gvm/master/binscripts/gvm-installer | /bin/bash creates=~/.gvm"
+  local_action: "shell executable=/usr/local/bin/zsh curl -sSL https://raw.githubusercontent.com/moovweb/gvm/master/binscripts/gvm-installer | /bin/bash creates=~/.gvm"
   ignore_errors: yes
 
 - name: install gvm version {{ golang_version }}
-  action: shell executable=/usr/local/bin/zsh gvm install go{{ golang_version }} creates=~/.gvm/gos/go{{ golang_version }}
+  local_action: shell executable=/usr/local/bin/zsh gvm install go{{ golang_version }} creates=~/.gvm/gos/go{{ golang_version }}
 
 - name: check gvm alias
-  action: shell executable=/usr/local/bin/zsh gvm list
+  local_action: shell executable=/usr/local/bin/zsh gvm list
   register: gvm_alias
   changed_when: false
 
 - name: make gvm default
-  action: shell executable=/usr/local/bin/zsh gvm use go{{ golang_version }} --default
+  local_action: shell executable=/usr/local/bin/zsh gvm use go{{ golang_version }} --default
   register: gvm_default
   changed_when: not gvm_default.stdout.find("{{ gvm_alias.stdout.find("=>") }}")
 
 # Janus
 - name: get janus
-  action: git repo=https://github.com/carlhuda/janus.git dest=~/.vim
+  local_action: git repo=https://github.com/carlhuda/janus.git dest=~/.vim
   register: get_janus
   changed_when: get_janus.before != get_janus.after
 
 - name: update janus
   when: '(get_janus.changed and get_janus.before is string)'
-  action: shell executable=/usr/local/bin/zsh chdir=~/.vim rake default -qs
+  local_action: shell executable=/usr/local/bin/zsh chdir=~/.vim rake default -qs
