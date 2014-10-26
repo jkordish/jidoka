@@ -4,21 +4,24 @@
   action: "shell ruby -e $(curl -fsSL https://raw.github.com/Homebrew/homebrew/go/install) creates=/usr/local/bin/brew"
   register: brew_install
 
-- name: Install brews
-  action: homebrew state=installed
-    name='zsh,zsh-completions,git,vim,curl,wget,tmux,jq,mercurial'
+- name: homebrew tap cask
+  action: command brew tap caskroom/cask
+  register: tap_cask
+  changed_when: '"Already tapped" not in tap_cask.stderr'
 
 - name: update homebrew
   when: brew_install|skipped
-  action: command brew update
+  action: homebrew update_homebrew=yes
   register: update_homebrew
-  changed_when: update_homebrew.stdout.find("Already up-to-date.")
+
+- name: Install brews
+  action: homebrew state=latest
+    name='zsh,zsh-completions,git,vim,curl,wget,tmux,jq,mercurial,brew-cask'
 
 - name: update brews
   when: update_homebrew.changed
-  action: command brew upgrade -f
+  action: homebrew upgrade_all=yes
   register: update_brews
-  changed_when: update_brews.stdout != ''
 
 - name: homebrew tap cask
   action: command brew tap caskroom/cask
@@ -28,6 +31,10 @@
 - name: homebrew install cask
   when: brew_cask|changed
   action: command brew install brew-cask
+
+- name: homebrew cask install software
+  action: homebrew_cask
+    name="atom,handbrake,iterm2,keepassx,quicksilver,scala-ide,spotify,vagrant,virtualbox,github,hipchat,java,netbeans,reggy,sourcetree,tunnelblick,vagrant-manager,vlc"
 
 - name: python pip
   action: pip name={{ item }} state=present
@@ -60,8 +67,12 @@
 
 # RVM
 - name: install rvm
+  when: lookup('pipe',"PATH=$GEM_HOME/bin:$HOME/.rvm/bin:$PATH rvm --version")
   action: "shell curl -sSL https://get.rvm.io | /bin/bash -s stable --ruby={{ ruby_version }} --ignore-dotfiles --autolibs=4 creates=~/.rvm"
   register: rvm_install
+
+- name: autoload rvm
+  action: lineinfile dest=~/.rvmrc line="rvm_auto_reload_flag=2"
 
 - name: update rvm
   when: lookup('pipe',"PATH=$GEM_HOME/bin:$HOME/.rvm/bin:$PATH rvm --version | awk '{print $2}'") != lookup('pipe','curl -sSL https://raw.github.com/wayneeseguin/rvm/stable/VERSION')
