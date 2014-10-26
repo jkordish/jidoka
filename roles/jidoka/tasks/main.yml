@@ -22,8 +22,11 @@
 
 - name: homebrew tap cask
   action: command brew tap caskroom/cask
+  register: brew_cask
+  changed_when: brew_cask.stdout != ''
 
 - name: homebrew install cask
+  when: brew_cask|changed
   action: command brew install brew-cask
 
 - name: python pip
@@ -61,7 +64,7 @@
   register: rvm_install
 
 - name: update rvm
-  when: lookup('pipe',"PATH=$GEM_HOME/bin:$HOME/.rvm/bin:$PATH rvm --version | awk 'FNR == 2 {print $2}'") != lookup('pipe','curl -sSL https://raw.github.com/wayneeseguin/rvm/stable/VERSION')
+  when: lookup('pipe',"PATH=$GEM_HOME/bin:$HOME/.rvm/bin:$PATH rvm --version | awk '{print $2}'") != lookup('pipe','curl -sSL https://raw.github.com/wayneeseguin/rvm/stable/VERSION')
   action: shell executable=/usr/local/bin/zsh rvm get stable --ignore-dotfiles --autolibs=4 && rvm
 
 - name: install ruby version {{ ruby_version }}
