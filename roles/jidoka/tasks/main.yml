@@ -84,6 +84,21 @@
 - name: install ruby version {{ ruby_version }}
   when: ! rvm_install.changed
   action: shell executable=/usr/local/bin/zsh rvm install --default {{ ruby_version }} creates=~/.rvm/rubies/ruby-{{ ruby_version }}
+  register: ruby_install
+
+- name: ensure {{ ruby_version }} is current and default
+  when: ruby_install.changed
+  action: shell executable=/usr/local/bin/zsh rvm use default
+
+- name: list rubies
+  when: ruby_install.changed
+  action: shell executable=/usr/local/bin/zsh rvm list strings | grep -v {{ ruby_version }}
+  register: rubies
+
+- name: purge old rubies
+  when: rubies.changed
+  action: shell executable=/usr/local/bin/zsh rvm remove {{ item }}
+  with_items: rubies.stdout_lines
 
 # NVM
 - name: clone nvm
@@ -91,6 +106,7 @@
 
 - name: install nodejs version {{ node_version }}
   action: shell executable=/usr/local/bin/zsh nvm install {{ node_version }} creates=~/.nvm/{{ node_version }}
+  register: nodejs_install
 
 - name: check nvm alias
   action: shell executable=/usr/local/bin/zsh nvm alias
@@ -101,6 +117,17 @@
   action: shell executable=/usr/local/bin/zsh nvm alias default {{ node_version }}
   register: nvm_default
   changed_when: not nvm_default.stdout.find("{{ nvm_alias }}")
+
+- name: list nodejs installs
+  when: nodejs_install.changed
+  action: shell executable=/usr/local/bin/zsh nvm list | awk '{print $2 }' | grep -Ev '{{ node_version }}|>' | strings
+  register: nvms
+
+- name: purge old nodejs installs
+  when: nvms.changed
+  action: shell executable=/usr/local/bin/zsh nvm uninstall {{ item }}
+  with_items: nvms.stdout_lines
+  failed_when: false
 
 # GVM
 - name: install gvm wrapper
