@@ -1,4 +1,4 @@
 ---
-ruby_version: "2.1.2"
-node_version: "v0.10.32"
+ruby_version: "2.1.5"
+node_version: "v0.10.33"
 golang_version: "1.3"

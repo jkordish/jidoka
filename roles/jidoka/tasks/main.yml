@@ -65,6 +65,9 @@
 - name: get antigen
   action: git repo=https://github.com/zsh-users/antigen.git dest=~/.antigen
 
+- name: update antigen
+  action: shell executable=/usr/local/bin/zsh chdir=~ source .antigen/antigen.zsh && antigen-update
+
 # RVM
 - name: install rvm
   when: lookup('pipe',"PATH=$GEM_HOME/bin:$HOME/.rvm/bin:$PATH rvm --version")
@@ -79,7 +82,7 @@
   action: shell executable=/usr/local/bin/zsh rvm get stable --ignore-dotfiles --autolibs=4 && rvm
 
 - name: install ruby version {{ ruby_version }}
-  when: rvm_install|skipped
+  when: ! rvm_install.changed
   action: shell executable=/usr/local/bin/zsh rvm install --default {{ ruby_version }} creates=~/.rvm/rubies/ruby-{{ ruby_version }}
 
 # NVM
