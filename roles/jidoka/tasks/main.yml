@@ -75,7 +75,7 @@
   register: rvm_install
 
 - name: autoload rvm
-  action: lineinfile dest=~/.rvmrc line="rvm_auto_reload_flag=2"
+  action: lineinfile dest=~/.rvmrc line="rvm_auto_reload_flag=2" create=yes
 
 - name: update rvm
   when: lookup('pipe',"PATH=$GEM_HOME/bin:$HOME/.rvm/bin:$PATH rvm --version | awk '{print $2}'") != lookup('pipe','curl -sSL https://raw.github.com/wayneeseguin/rvm/stable/VERSION')
