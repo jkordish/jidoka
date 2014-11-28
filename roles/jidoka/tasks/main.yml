@@ -1,43 +1,37 @@
 ---
 # Homebrew work
 - name: Install Homebrew
-  action: "shell ruby -e $(curl -fsSL https://raw.github.com/Homebrew/homebrew/go/install) creates=/usr/local/bin/brew"
+  shell: "ruby -e $(curl -fsSL https://raw.github.com/Homebrew/homebrew/go/install) creates=/usr/local/bin/brew"
   register: brew_install
-
-- name: homebrew tap cask
-  action: command brew tap caskroom/cask
-  register: tap_cask
-  changed_when: '"Already tapped" not in tap_cask.stderr'
 
 - name: update homebrew
   when: brew_install|skipped
-  action: homebrew update_homebrew=yes
+  homebrew: update_homebrew=yes
   register: update_homebrew
 
 - name: Install brews
-  action: homebrew state=latest
-    name='zsh,zsh-completions,git,vim,curl,wget,tmux,jq,mercurial,brew-cask'
+  homebrew: name='zsh,zsh-completions,git,vim,curl,wget,tmux,jq,mercurial,brew-cask'
 
 - name: update brews
   when: update_homebrew.changed
-  action: homebrew upgrade_all=yes
+  homebrew: upgrade_all=yes
   register: update_brews
 
 - name: homebrew tap cask
-  action: command brew tap caskroom/cask
+  command: brew tap caskroom/cask
   register: brew_cask
-  changed_when: brew_cask.stdout != ''
+  changed_when: '"Already tapped" not in brew_cask.stderr'
+  failed_when: false
 
 - name: homebrew install cask
   when: brew_cask|changed
-  action: command brew install brew-cask
+  command: brew install brew-cask
 
 - name: homebrew cask install software
-  action: homebrew_cask
-    name="atom,handbrake,iterm2,keepassx,quicksilver,scala-ide,spotify,vagrant,virtualbox,github,hipchat,java,netbeans,reggy,sourcetree,tunnelblick,vagrant-manager,vlc"
+  homebrew_cask: name="atom,handbrake,iterm2,keepassx,quicksilver,scala-ide,spotify,vagrant,virtualbox,github,hipchat,java,netbeans,reggy,sourcetree,tunnelblick,vagrant-manager,vlc"
 
 - name: python pip
-  action: pip name={{ item }} state=present
+  pip: name={{ item }}
   with_items:
       - virtualenv
       - virtualenv-clone
@@ -45,7 +39,7 @@
 
 # Grab Dotfiles
 - name: Grab dot files
-  action: get_url url={{ item.url }} dest={{ item.dest }} force=yes
+  get_url: url={{ item.url }} dest={{ item.dest }} force=yes
   with_items:
   - { url: 'https://raw.githubusercontent.com/joethemongoose/Dotfiles/master/zfunctions',   dest: '~/.zfunctions'  }
   - { url: 'https://raw.githubusercontent.com/joethemongoose/Dotfiles/master/zshenv-osx',   dest: '~/.zshenv'      }
@@ -57,101 +51,108 @@
 - name: Change shell to zsh
   sudo: yes
   when: lookup('env','SHELL') != "/usr/local/bin/zsh"
-  action: command chsh -s /usr/local/bin/zsh "{{ lookup('env', 'USER') }}"
+  command: "chsh -s /usr/local/bin/zsh {{ lookup('env', 'USER') }}"
   register: changed_shell
-  changed_when: not changed_shell.stderr.find("no changes made")
+  changed_when: '"no changes made" not in changed_shell.stderr'
 
 # install antigen
 - name: get antigen
-  action: git repo=https://github.com/zsh-users/antigen.git dest=~/.antigen
+  git: repo=https://github.com/zsh-users/antigen.git dest=~/.antigen
 
 - name: update antigen
-  action: shell executable=/usr/local/bin/zsh chdir=~ source .antigen/antigen.zsh && antigen-update
+  shell: "executable=/usr/local/bin/zsh chdir=~ source .antigen/antigen.zsh && antigen-update"
 
 # RVM
 - name: install rvm
-  when: lookup('pipe',"PATH=$GEM_HOME/bin:$HOME/.rvm/bin:$PATH rvm --version")
-  action: "shell curl -sSL https://get.rvm.io | /bin/bash -s stable --ruby={{ ruby_version }} --ignore-dotfiles --autolibs=4 creates=~/.rvm"
+  when: ! lookup('env','rvm_version')
+  shell: "curl -sSL https://get.rvm.io | /bin/bash -s stable --ruby={{ ruby_version }} --ignore-dotfiles --autolibs=4 creates=~/.rvm"
   register: rvm_install
 
 - name: autoload rvm
-  action: lineinfile dest=~/.rvmrc line="rvm_auto_reload_flag=2" create=yes
+  lineinfile: dest=~/.rvmrc line="rvm_auto_reload_flag=2" create=yes
 
 - name: update rvm
-  when: lookup('pipe',"PATH=$GEM_HOME/bin:$HOME/.rvm/bin:$PATH rvm --version | awk '{print $2}'") != lookup('pipe','curl -sSL https://raw.github.com/wayneeseguin/rvm/stable/VERSION')
-  action: shell executable=/usr/local/bin/zsh rvm get stable --ignore-dotfiles --autolibs=4 && rvm
+  when: lookup('pipe','curl -sSL https://raw.github.com/wayneeseguin/rvm/stable/VERSION') not in lookup('env','rvm_version')
+  shell: "executable=/usr/local/bin/zsh rvm get stable --ignore-dotfiles --autolibs=4 && rvm"
 
 - name: install ruby version {{ ruby_version }}
-  action: shell executable=/usr/local/bin/zsh rvm install --default {{ ruby_version }} creates=~/.rvm/rubies/ruby-{{ ruby_version }}
+  shell: "executable=/usr/local/bin/zsh rvm install --default {{ ruby_version }} creates=~/.rvm/rubies/ruby-{{ ruby_version }}"
   register: ruby_install
 
 - name: ensure {{ ruby_version }} is current and default
-  when: ruby_install.changed
-  action: shell executable=/usr/local/bin/zsh rvm use default
+  when: ruby_version not in lookup('env', 'RUBY_VERSION')
+  shell: "executable=/usr/local/bin/zsh rvm use default"
 
 - name: list rubies
   when: ruby_install.changed
-  action: shell executable=/usr/local/bin/zsh rvm list strings | grep -v {{ ruby_version }}
+  shell: "executable=/usr/local/bin/zsh rvm list strings | grep -v {{ ruby_version }}"
   register: rubies
 
 - name: purge old rubies
   when: rubies.changed
-  action: shell executable=/usr/local/bin/zsh rvm remove {{ item }}
+  shell: "executable=/usr/local/bin/zsh rvm remove {{ item }}"
   with_items: rubies.stdout_lines
 
 # NVM
 - name: clone nvm
-  action: git repo=https://github.com/creationix/nvm.git dest=~/.nvm
+  git: repo=https://github.com/creationix/nvm.git dest=~/.nvm
 
 - name: install nodejs version {{ node_version }}
-  action: shell executable=/usr/local/bin/zsh nvm install {{ node_version }} creates=~/.nvm/{{ node_version }}
+  shell: "executable=/usr/local/bin/zsh nvm install {{ node_version }} creates=~/.nvm/{{ node_version }}"
   register: nodejs_install
 
 - name: check nvm alias
-  action: shell executable=/usr/local/bin/zsh nvm alias
+  shell: "executable=/usr/local/bin/zsh nvm alias"
   register: nvm_alias
   changed_when: false
 
 - name: make nodejs default
-  action: shell executable=/usr/local/bin/zsh nvm alias default {{ node_version }}
+  shell: "executable=/usr/local/bin/zsh nvm alias default {{ node_version }}"
   register: nvm_default
-  changed_when: not nvm_default.stdout.find("{{ nvm_alias }}")
+  changed_when: '"{{ nvm_alias }}" not in nvm_default.stdout'
 
 - name: list nodejs installs
   when: nodejs_install.changed
-  action: shell executable=/usr/local/bin/zsh nvm list | awk '{print $2 }' | grep -Ev '{{ node_version }}|>' | strings
+  shell: "executable=/usr/local/bin/zsh nvm list | awk '{print $2 }' | grep -Ev '{{ node_version }}|>' | strings"
   register: nvms
 
 - name: purge old nodejs installs
   when: nvms.changed
-  action: shell executable=/usr/local/bin/zsh nvm uninstall {{ item }}
+  shell: executable=/usr/local/bin/zsh nvm uninstall {{ item }}
   with_items: nvms.stdout_lines
   failed_when: false
 
 # GVM
 - name: install gvm wrapper
-  action: "shell executable=/usr/local/bin/zsh curl -sSL https://raw.githubusercontent.com/moovweb/gvm/master/binscripts/gvm-installer | /bin/bash creates=~/.gvm"
+  shell: "executable=/usr/local/bin/zsh curl -sSL https://raw.githubusercontent.com/moovweb/gvm/master/binscripts/gvm-installer | /bin/bash creates=~/.gvm"
   ignore_errors: yes
 
-- name: install gvm version {{ golang_version }}
-  action: shell executable=/usr/local/bin/zsh gvm install go{{ golang_version }} creates=~/.gvm/gos/go{{ golang_version }}
+- name: install go version go{{ go_version }}
+  shell: "executable=/usr/local/bin/zsh gvm install go{{ go_version }} creates=~/.gvm/gos/go{{ go_version }}"
+  register: go_install
 
-- name: check gvm alias
-  action: shell executable=/usr/local/bin/zsh gvm list
-  register: gvm_alias
-  changed_when: false
-
-- name: make gvm default
-  action: shell executable=/usr/local/bin/zsh gvm use go{{ golang_version }} --default
+- name: make go{{ go_version }} default
+  when: go_version not in lookup('env', 'gvm_go_name')
+  shell: "executable=/usr/local/bin/zsh gvm use go{{ go_version }} --default"
   register: gvm_default
-  changed_when: not gvm_default.stdout.find("{{ gvm_alias.stdout.find("=>") }}")
+  changed_when: '"Now using version go{{ go_version }}" in gvm_default.stdout'
+
+- name: list unused go installs
+  when: go_install|changed
+  shell: "executable=/usr/local/bin/zsh gvm list | grep -e go\\[1-9\\] | grep -v \\=\\>"
+  register: go_unused
+
+- name: remove unused go installs
+  when: go_unused|changed
+  shell: "executable=/usr/local/bin/zsh gvm uninstall {{ item }}"
+  with_items: go_unused.stdout_lines
 
 # Janus
 - name: get janus
-  action: git repo=https://github.com/carlhuda/janus.git dest=~/.vim
+  git: repo=https://github.com/carlhuda/janus.git dest=~/.vim
   register: get_janus
   changed_when: get_janus.before != get_janus.after
 
 - name: update janus
   when: '(get_janus.changed and get_janus.before is string)'
-  action: shell executable=/usr/local/bin/zsh chdir=~/.vim rake default -qs
+  shell: "executable=/usr/local/bin/zsh chdir=~/.vim rake default -qs"
