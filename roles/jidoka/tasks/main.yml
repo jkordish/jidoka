@@ -10,7 +10,8 @@
   register: update_homebrew
 
 - name: Install brews
-  homebrew: name='zsh,zsh-completions,git,vim,curl,wget,tmux,jq,mercurial,brew-cask'
+  homebrew: name={{ item }}
+  with_items: homebrew.brews
 
 - name: update brews
   when: update_homebrew.changed
@@ -28,10 +29,15 @@
   command: brew install brew-cask
 
 - name: homebrew cask install software
-  homebrew_cask: name="atom,handbrake,iterm2,keepassx,quicksilver,scala-ide,spotify,vagrant,virtualbox,github,hipchat,java,netbeans,reggy,sourcetree,tunnelblick,vagrant-manager,vlc"
+  homebrew_cask: name={{ item }}
+  with_items: homebrew.casks
+
+- name: atom modules
+  command: apm install {{ item }}
+  with_items: apm.modules
 
 - name: python pip
-  pip: name={{ item }}
+  pip: name={{ item }} state=latest
   with_items:
       - virtualenv
       - virtualenv-clone
@@ -48,12 +54,12 @@
   - { url: 'https://raw.githubusercontent.com/joethemongoose/Dotfiles/master/tmux.conf',    dest: '~/.tmux.conf'   }
   - { url: 'https://raw.githubusercontent.com/joethemongoose/Dotfiles/master/vimrc.after',  dest: '~/.vimrc.after' }
 
-- name: Change shell to zsh
-  sudo: yes
-  when: lookup('env','SHELL') != "/usr/local/bin/zsh"
-  command: "chsh -s /usr/local/bin/zsh {{ lookup('env', 'USER') }}"
-  register: changed_shell
-  changed_when: '"no changes made" not in changed_shell.stderr'
+#- name: Change shell to zsh
+#  sudo: yes
+#  when: lookup('env','SHELL') != "/usr/local/bin/zsh"
+#  command: "chsh -s /usr/local/bin/zsh {{ lookup('env', 'USER') }}"
+#  register: changed_shell
+#  changed_when: '"no changes made" not in changed_shell.stderr'
 
 # install antigen
 - name: get antigen

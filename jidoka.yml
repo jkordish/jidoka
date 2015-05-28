@@ -4,4 +4,4 @@
   connection: local
   sudo: no
   roles:
-    - { role: 'jidoka' }
+    - jidoka
