@@ -19,19 +19,14 @@
     casks:
       - atom
       - handbrake
-      - iterm2
       - keepassx
-      - quicksilver
-      - scala-ide
       - spotify
       - vagrant
       - virtualbox
       - github
       - hipchat
       - java
-      - netbeans
       - reggy
-      - sourcetree
       - tunnelblick
       - vagrant-manager
       - vlc
