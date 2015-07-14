@@ -6,6 +6,7 @@
   homebrew:
     brews:
       - zsh
+      - bash
       - zsh-completions
       - git
       - vim
@@ -16,6 +17,7 @@
       - mercurial
       - brew-cask
       - jenv
+      - brew-cask
     casks:
       - atom
       - handbrake
@@ -32,6 +34,12 @@
       - vlc
       - skype
       - boot2docker
+  pip:
+    modules:
+      - virtualenv
+      - virtualenv-clone
+      - virtualenvwrapper
+      - awscli
   apm:
     modules:
       - atom-beautify
