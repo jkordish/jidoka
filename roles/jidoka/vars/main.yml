@@ -1,7 +1,7 @@
 ---
   ruby_version: "2.2.3"
-  node_version: "v0.12.7"
-  go_version: "1.5"
+  node_version: "v4.0.0"
+  go_version: "1.5.1"
   shell: "/usr/local/bin/zsh"
   homebrew:
     brews:
@@ -25,7 +25,7 @@
       - spotify
       - vagrant
       - virtualbox
-      - github
+      - github-desktop
       - hipchat
       - java
       - reggy
