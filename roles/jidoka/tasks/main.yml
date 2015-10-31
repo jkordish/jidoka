@@ -146,3 +146,10 @@
 - name: update janus
   when: get_janus.changed
   shell: "executable=/usr/local/bin/zsh chdir=~/.vim rake default -qs"
+
+# Rust
+- name: install multirust
+  shell: "curl -sf https://raw.githubusercontent.com/brson/multirust/master/blastoff.sh | sh"
+
+- name: install Rust
+  command: "/usr/local/bin/multirust update"
