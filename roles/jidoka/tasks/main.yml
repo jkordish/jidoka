@@ -1,7 +1,7 @@
 ---
 # Homebrew work
 - name: Install Homebrew
-  shell: "ruby -e $(curl -fsSL https://raw.github.com/Homebrew/homebrew/go/install) creates=/usr/local/bin/brew"
+  shell: "ruby -e $(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install) creates=/usr/local/bin/brew"
   register: brew_install
 
 - name: homebrew tap cask
@@ -119,7 +119,7 @@
   ignore_errors: yes
 
 - name: install go version go{{ go_version }}
-  shell: "executable=/usr/local/bin/zsh load_gvm && gvm install go{{ go_version }} creates=~/.gvm/gos/go{{ go_version }}"
+  shell: "executable=/usr/local/bin/zsh load_gvm && gvm install go{{ go_version }} --binary creates=~/.gvm/gos/go{{ go_version }}"
   register: go_install
 
 - name: make go{{ go_version }} default
@@ -148,8 +148,8 @@
   shell: "executable=/usr/local/bin/zsh chdir=~/.vim rake default -qs"
 
 # Rust
-- name: install multirust
-  shell: "curl -sf https://raw.githubusercontent.com/brson/multirust/master/blastoff.sh | sh"
-
-- name: install Rust
-  command: "/usr/local/bin/multirust update"
+# - name: install multirust
+#   shell: "curl -sf https://raw.githubusercontent.com/brson/multirust/master/blastoff.sh | sh"
+#
+# - name: install Rust
+#   command: "/usr/local/bin/multirust update"

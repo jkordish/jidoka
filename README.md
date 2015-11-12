@@ -10,7 +10,7 @@ The following [Ansible](https://github.com/ansible/ansible) playbook does the fo
   * [tmux](http://tmux.sourceforge.net/) - terminal multiplexer
   * [vim](http://www.vim.org/) - text editing
   * [zsh](http://www.zsh.org/) - system shell
-1. Grabs the latest dotfiles from my github [joethemongoose](https://github.com/joethemongoose/dotfiles)
+1. Grabs the latest dotfiles from my github [jkordish](https://github.com/jkordish/dotfiles)
   * Changes zsh to default to vi bindings with graphical notification of mode
   * Antigen with various modules (language completitions)
   * etc
@@ -24,25 +24,29 @@ The following [Ansible](https://github.com/ansible/ansible) playbook does the fo
 ## Prereq ##
 Ensure the OSX Xcode command line tools are installed
 
-1. Do it maually
+1. Do it manually
 
-    xcodebuild -license; xcode-select --install
+    $ xcodebuild -license && xcode-select --install
 
 1. Automate it [here](https://gist.github.com/d7an/9756475)
+
+### install pip ###
+
+    $ curl -sSL https://bootstrap.pypa.io/get-pip.py | python - --user
 
 ### Install Ansible ###
 
 Installing Ansible should be as easy as
 
-    pip install -U ansible
+    $ pip install -U ansible
 
 ## Running ##
 
-    ansible-playbook jidoka.yml -K
+    $ ansible-playbook jidoka.yml
 
 ### config ###
 
-The only real configuration options avaiable are the versions of the node/ruby/go to be installed. They can be changed by editing 
+The only real configuration options available are the versions of the node/ruby/go to be installed. They can be changed by editing
 
     roles/jidoka/vars/main.yml.
 
