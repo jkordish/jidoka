@@ -38,7 +38,7 @@ Ensure the OSX Xcode command line tools are installed
 
 Installing Ansible should be as easy as
 
-    $ pip install -U ansible
+    $ pip install --user -U ansible
 
 ## Running ##
 
