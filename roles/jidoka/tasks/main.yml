@@ -7,30 +7,26 @@
 - name: homebrew tap cask
   homebrew_tap: tap=caskroom/cask
 
-- name: Install brews
-  homebrew: name={{ item }} update_homebrew=yes
+- name: install brews
+  homebrew: name={{item}} update_homebrew=yes upgrade_all=yes state=latest
   with_items: homebrew.brews
-  failed_when: false
-
-- name: update brews
-  homebrew: upgrade_all=yes
 
 - name: homebrew cask install software
-  homebrew_cask: name={{ item }}
+  homebrew_cask: name={{item}}
   with_items: homebrew.casks
 
 - name: atom modules
-  command: apm install {{ item }}
+  command: apm install {{item}}
   with_items: apm.modules
 
 - name: python pip
   #sudo: yes
-  pip: name={{ item }} state=latest executable=/usr/local/bin/pip
+  pip: name={{item}} state=latest executable=/usr/local/bin/pip
   with_items: pip.modules
 
 # Grab Dotfiles
 - name: Grab dot files
-  get_url: url={{ item.url }} dest={{ item.dest }} force=yes
+  get_url: url={{item.url}} dest={{item.dest}} force=yes
   with_items:
   - { url: 'https://raw.githubusercontent.com/joethemongoose/Dotfiles/master/zfunctions',   dest: '~/.zfunctions'  }
   - { url: 'https://raw.githubusercontent.com/joethemongoose/Dotfiles/master/zshenv-osx',   dest: '~/.zshenv'      }
@@ -39,6 +35,7 @@
   - { url: 'https://raw.githubusercontent.com/joethemongoose/Dotfiles/master/tmux.conf',    dest: '~/.tmux.conf'   }
   - { url: 'https://raw.githubusercontent.com/joethemongoose/Dotfiles/master/vimrc.after',  dest: '~/.vimrc.after' }
 
+# you really don't want to do this. it can break apple's software updater
 #- name: Change shell to zsh
 #  sudo: yes
 #  when: lookup('env','SHELL') != "/usr/local/bin/zsh"
