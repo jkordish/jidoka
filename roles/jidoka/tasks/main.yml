@@ -28,12 +28,12 @@
 - name: Grab dot files
   get_url: url={{item.url}} dest={{item.dest}}
   with_items:
-  - { url: 'https://raw.githubusercontent.com/joethemongoose/Dotfiles/master/zfunctions',   dest: '~/.zfunctions'  }
-  - { url: 'https://raw.githubusercontent.com/joethemongoose/Dotfiles/master/zshenv-osx',   dest: '~/.zshenv'      }
-  - { url: 'https://raw.githubusercontent.com/joethemongoose/Dotfiles/master/zshrc-osx',    dest: '~/.zshrc'       }
-  #  - { url: 'https://raw.githubusercontent.com/joethemongoose/Dotfiles/master/zshrc.zni',    dest: '~/.zshrc.zni'   }
-  - { url: 'https://raw.githubusercontent.com/joethemongoose/Dotfiles/master/tmux.conf',    dest: '~/.tmux.conf'   }
-  - { url: 'https://raw.githubusercontent.com/joethemongoose/Dotfiles/master/vimrc.after',  dest: '~/.vimrc.after' }
+  - { url: 'https://raw.githubusercontent.com/jkordish/Dotfiles/master/zfunctions',   dest: '~/.zfunctions'  }
+  - { url: 'https://raw.githubusercontent.com/jkordish/Dotfiles/master/zshenv-osx',   dest: '~/.zshenv'      }
+  - { url: 'https://raw.githubusercontent.com/jkordish/Dotfiles/master/zshrc-osx',    dest: '~/.zshrc'       }
+  #  - { url: 'https://raw.githubusercontent.com/jkordish/Dotfiles/master/zshrc.zni',    dest: '~/.zshrc.zni'   }
+  - { url: 'https://raw.githubusercontent.com/jkordish/Dotfiles/master/tmux.conf',    dest: '~/.tmux.conf'   }
+  - { url: 'https://raw.githubusercontent.com/jkordish/Dotfiles/master/vimrc.after',  dest: '~/.vimrc.after' }
 
 # you really don't want to do this. it can break apple's software updater
 #- name: Change shell to zsh
