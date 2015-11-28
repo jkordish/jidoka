@@ -26,7 +26,7 @@
 
 # Grab Dotfiles
 - name: Grab dot files
-  get_url: url={{item.url}} dest={{item.dest}} force=yes
+  get_url: url={{item.url}} dest={{item.dest}}
   with_items:
   - { url: 'https://raw.githubusercontent.com/joethemongoose/Dotfiles/master/zfunctions',   dest: '~/.zfunctions'  }
   - { url: 'https://raw.githubusercontent.com/joethemongoose/Dotfiles/master/zshenv-osx',   dest: '~/.zshenv'      }
@@ -53,7 +53,7 @@
 # RVM
 - name: install rvm
   when: ! lookup('env','rvm_version')
-  shell: "curl -sSL https://get.rvm.io | /bin/bash -s stable --ruby={{ ruby_version }} --ignore-dotfiles --autolibs=4 creates=~/.rvm"
+  shell: "curl -sSL https://get.rvm.io | /bin/bash -s stable --ruby={{ruby_version}} --ignore-dotfiles --autolibs=4 creates=~/.rvm"
   register: rvm_install
 
 - name: autoload rvm
@@ -63,30 +63,30 @@
   when: lookup('pipe','curl -sSL https://raw.github.com/wayneeseguin/rvm/stable/VERSION') not in lookup('env','rvm_version')
   shell: "executable=/usr/local/bin/zsh load_rvm && rvm get stable --ignore-dotfiles --autolibs=4 && rvm"
 
-- name: install ruby version {{ ruby_version }}
-  shell: "executable=/usr/local/bin/zsh load_rvm && rvm install --default {{ ruby_version }} creates=~/.rvm/rubies/ruby-{{ ruby_version }}"
+- name: install ruby version {{ruby_version}}
+  shell: "executable=/usr/local/bin/zsh load_rvm && rvm install --default {{ruby_version}} creates=~/.rvm/rubies/ruby-{{ruby_version}}"
   register: ruby_install
 
-- name: ensure {{ ruby_version }} is current and default
+- name: ensure {{ruby_version}} is current and default
   when: ruby_version not in lookup('env', 'RUBY_VERSION')
   shell: "executable=/usr/local/bin/zsh load_rvm && rvm use default"
 
 - name: list rubies
   when: ruby_install.changed
-  shell: "executable=/usr/local/bin/zsh load_rvm && rvm list strings | grep -v {{ ruby_version }}"
+  shell: "executable=/usr/local/bin/zsh load_rvm && rvm list strings | grep -v {{ruby_version}}"
   register: rubies
 
 - name: purge old rubies
   when: rubies.changed
-  shell: "executable=/usr/local/bin/zsh load_rvm && rvm remove {{ item }}"
+  shell: "executable=/usr/local/bin/zsh load_rvm && rvm remove {{item}}"
   with_items: rubies.stdout_lines
 
 # NVM
 - name: clone nvm
   git: repo=https://github.com/creationix/nvm.git dest=~/.nvm update=yes
 
-- name: install nodejs version {{ node_version }}
-  shell: "executable=/usr/local/bin/zsh load_nvm && nvm install {{ node_version }} creates=~/.nvm/{{ node_version }}"
+- name: install nodejs version {{node_version}}
+  shell: "executable=/usr/local/bin/zsh load_nvm && nvm install {{node_version}} creates=~/.nvm/{{node_version}}"
   register: nodejs_install
 
 - name: check nvm alias
@@ -95,18 +95,18 @@
   changed_when: false
 
 - name: make nodejs default
-  shell: "executable=/usr/local/bin/zsh load_nvm && nvm alias default {{ node_version }}"
+  shell: "executable=/usr/local/bin/zsh load_nvm && nvm alias default {{node_version}}"
   register: nvm_default
-  changed_when: '"{{ nvm_alias }}" not in nvm_default.stdout'
+  changed_when: '"{{nvm_alias}}" not in nvm_default.stdout'
 
 - name: list nodejs installs
   when: nodejs_install.changed
-  shell: "executable=/usr/local/bin/zsh load_nvm && nvm list | awk '{print $2 }' | grep -Ev '{{ node_version }}|>' | strings"
+  shell: "executable=/usr/local/bin/zsh load_nvm && nvm list | awk '{print $2 }' | grep -Ev '{{node_version}}|>' | strings"
   register: nvms
 
 - name: purge old nodejs installs
   when: nvms.changed
-  shell: "executable=/usr/local/bin/zsh load_nvm && nvm uninstall {{ item }}"
+  shell: "executable=/usr/local/bin/zsh load_nvm && nvm uninstall {{item}}"
   with_items: nvms.stdout_lines
   failed_when: false
 
@@ -115,15 +115,15 @@
   shell: "executable=/usr/local/bin/zsh curl -sSL https://raw.githubusercontent.com/moovweb/gvm/master/binscripts/gvm-installer | /bin/bash creates=~/.gvm"
   ignore_errors: yes
 
-- name: install go version go{{ go_version }}
-  shell: "executable=/usr/local/bin/zsh load_gvm && gvm install go{{ go_version }} --binary creates=~/.gvm/gos/go{{ go_version }}"
+- name: install go version go{{go_version}}
+  shell: "executable=/usr/local/bin/zsh load_gvm && gvm install go{{go_version}} --binary creates=~/.gvm/gos/go{{go_version}}"
   register: go_install
 
-- name: make go{{ go_version }} default
+- name: make go{{go_version}} default
   when: go_version not in lookup('env', 'gvm_go_name')
-  shell: "executable=/usr/local/bin/zsh load_gvm && gvm use go{{ go_version }} --default"
+  shell: "executable=/usr/local/bin/zsh load_gvm && gvm use go{{go_version}} --default"
   register: gvm_default
-  changed_when: '"Now using version go{{ go_version }}" in gvm_default.stdout'
+  changed_when: '"Now using version go{{go_version}}" in gvm_default.stdout'
 
 - name: list unused go installs
   when: go_install|changed
@@ -132,7 +132,7 @@
 
 - name: remove unused go installs
   when: go_unused|changed
-  shell: "executable=/usr/local/bin/zsh load_gvm && gvm uninstall {{ item }}"
+  shell: "executable=/usr/local/bin/zsh load_gvm && gvm uninstall {{item}}"
   with_items: go_unused.stdout_lines
 
 # Janus
