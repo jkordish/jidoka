@@ -33,7 +33,7 @@
       - vagrant-manager
       - vlc
       - skype
-      - boot2docker
+      - dockertoolbox
   pip:
     modules:
       - virtualenv
