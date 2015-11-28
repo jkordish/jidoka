@@ -2,6 +2,6 @@
 - name: jidoka
   hosts: localhost
   connection: local
-  sudo: no
+  become: no
   roles:
     - jidoka
