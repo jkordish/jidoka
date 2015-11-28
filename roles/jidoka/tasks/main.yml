@@ -31,7 +31,7 @@
   - { url: 'https://raw.githubusercontent.com/joethemongoose/Dotfiles/master/zfunctions',   dest: '~/.zfunctions'  }
   - { url: 'https://raw.githubusercontent.com/joethemongoose/Dotfiles/master/zshenv-osx',   dest: '~/.zshenv'      }
   - { url: 'https://raw.githubusercontent.com/joethemongoose/Dotfiles/master/zshrc-osx',    dest: '~/.zshrc'       }
-  - { url: 'https://raw.githubusercontent.com/joethemongoose/Dotfiles/master/zshrc.zni',    dest: '~/.zshrc.zni'   }
+  #  - { url: 'https://raw.githubusercontent.com/joethemongoose/Dotfiles/master/zshrc.zni',    dest: '~/.zshrc.zni'   }
   - { url: 'https://raw.githubusercontent.com/joethemongoose/Dotfiles/master/tmux.conf',    dest: '~/.tmux.conf'   }
   - { url: 'https://raw.githubusercontent.com/joethemongoose/Dotfiles/master/vimrc.after',  dest: '~/.vimrc.after' }
 
