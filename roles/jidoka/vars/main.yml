@@ -19,6 +19,7 @@
       - mercurial
       - brew-cask
       - jenv
+      - multirust
     casks:
       - atom
       - handbrake
@@ -35,6 +36,9 @@
       - vlc
       - skype
       - dockertoolbox
+      - font-inconsolata
+      - font-source-code-pro
+      - font-terminus
   pip:
     modules:
       - virtualenv

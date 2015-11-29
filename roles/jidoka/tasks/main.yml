@@ -4,8 +4,11 @@
   shell: "ruby -e $(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install) creates=/usr/local/bin/brew"
   register: brew_install
 
-- name: homebrew tap cask
-  homebrew_tap: tap=caskroom/cask
+- name: homebrew tap cask/fonts
+  homebrew_tap: tap="{{item}}"
+  with_items:
+    - caskroom/cask
+    - caskroom/fonts
 
 - name: install brews
   homebrew: name={{item}} update_homebrew=yes upgrade_all=yes state=latest
@@ -36,7 +39,7 @@
 
 # install antigen
 - name: get antigen
-  git: repo=https://github.com/zsh-users/antigen.git dest=~/.antigen
+  git: repo=https://github.com/zsh-users/antigen.git dest=~/.antigen force=yes
 
 - name: update antigen
   shell: "executable={{shell}} chdir=~ source .antigen/antigen.zsh && antigen-update"
@@ -103,7 +106,7 @@
   ignore_errors: yes
 
 - name: install go versions
-  shell: "executable={{shell}} gvm install {{item}} && gvm use {{item}} --default "#creates=~/.gvm/environments/{{item}}"
+  shell: "executable={{shell}} gvm install {{item}} && gvm use {{item}} --default creates=~/.gvm/environments/{{item}}"
   with_items: gvm
 
 - name: install gom
@@ -119,7 +122,7 @@
 
 # Janus
 - name: get janus
-  git: repo=https://github.com/carlhuda/janus.git dest=~/.vim update=yes force=yes
+  git: repo=https://github.com/carlhuda/janus.git dest=~/.vim force=yes
   changed_when: get_janus.before != get_janus.after
   register: get_janus
 
@@ -127,21 +130,25 @@
   shell: "executable={{shell}} chdir=~/.vim rake default -qs"
 
 # Rust
-- name: get multirust
-  get_url:
-    url: https://raw.githubusercontent.com/brson/multirust/master/blastoff.sh
-    dest: /tmp/blastoff.sh
-    mode: 0755
+# moved the installation of multirust to homebrew
+# - name: get multirust
+#   get_url:
+#     url: https://raw.githubusercontent.com/brson/multirust/master/blastoff.sh
+#     dest: /tmp/blastoff.sh
+#     mode: 0755
+#
+# - name: install multirust
+#   become: yes
+#   become_user: "{{lookup('env', 'USER')}}"
+#   become_method: sudo
+#   expect:
+#     creates: /usr/local/bin/multirust
+#     command: /tmp/blastoff.sh
+#     responses:
+#       Ready: Y
 
-- name: install multirust
-  become: yes
-  become_user: "{{lookup('env', 'USER')}}"
-  become_method: sudo
-  expect:
-    creates: /usr/local/bin/multirust
-    command: /tmp/blastoff.sh
-    responses:
-      Ready: Y
+- name: set default rust toolchain to nightly
+  command: multirust default nightly
 
 - name: update rust
-  command: "/usr/local/bin/multirust update"
+  command: "multirust update"
