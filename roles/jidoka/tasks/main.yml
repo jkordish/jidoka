@@ -70,8 +70,6 @@
   shell: "executable={{shell}} rvm list strings"
   register: rubies
 
-- debug: msg="{{rubies}}"
-
 - name: purge old rubies
   when: rubies.stdout_lines | length > 1
   shell: "executable={{shell}} rvm remove {{item}}"
