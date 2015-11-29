@@ -31,24 +31,15 @@
   - { url: 'https://raw.githubusercontent.com/jkordish/Dotfiles/master/zfunctions',   dest: '~/.zfunctions'  }
   - { url: 'https://raw.githubusercontent.com/jkordish/Dotfiles/master/zshenv-osx',   dest: '~/.zshenv'      }
   - { url: 'https://raw.githubusercontent.com/jkordish/Dotfiles/master/zshrc-osx',    dest: '~/.zshrc'       }
-  #  - { url: 'https://raw.githubusercontent.com/jkordish/Dotfiles/master/zshrc.zni',    dest: '~/.zshrc.zni'   }
   - { url: 'https://raw.githubusercontent.com/jkordish/Dotfiles/master/tmux.conf',    dest: '~/.tmux.conf'   }
   - { url: 'https://raw.githubusercontent.com/jkordish/Dotfiles/master/vimrc.after',  dest: '~/.vimrc.after' }
-
-# you really don't want to do this. it can break apple's software updater
-#- name: Change shell to zsh
-#  sudo: yes
-#  when: lookup('env','SHELL') != "/usr/local/bin/zsh"
-#  command: "chsh -s /usr/local/bin/zsh {{ lookup('env', 'USER') }}"
-#  register: changed_shell
-#  changed_when: '"no changes made" not in changed_shell.stderr'
 
 # install antigen
 - name: get antigen
   git: repo=https://github.com/zsh-users/antigen.git dest=~/.antigen
 
 - name: update antigen
-  shell: "executable=/usr/local/bin/zsh chdir=~ source .antigen/antigen.zsh && antigen-update"
+  shell: "executable={{shell}} chdir=~ source .antigen/antigen.zsh && antigen-update"
 
 # RVM
 - name: install rvm
@@ -60,93 +51,97 @@
   lineinfile: dest=~/.rvmrc line="rvm_auto_reload_flag=2" create=yes
 
 - name: update rvm
-  when: lookup('pipe','curl -sSL https://raw.github.com/wayneeseguin/rvm/stable/VERSION') not in lookup('env','rvm_version')
-  shell: "executable=/usr/local/bin/zsh load_rvm && rvm get stable --ignore-dotfiles --autolibs=4 && rvm"
+  when: ! lookup('pipe','curl -sSL https://raw.github.com/wayneeseguin/rvm/stable/VERSION') in lookup('env','rvm_version')
+  shell: "executable={{shell}} rvm get stable --quiet-curl --ignore-dotfiles --autolibs=4"
 
-- name: install ruby version {{ruby_version}}
-  shell: "executable=/usr/local/bin/zsh load_rvm && rvm install --default {{ruby_version}} creates=~/.rvm/rubies/ruby-{{ruby_version}}"
+- name: install ruby
+  shell: "executable={{shell}} rvm install --quiet-curl --default {{ruby_version}} creates=~/.rvm/rubies/ruby-{{ruby_version}}"
   register: ruby_install
 
-- name: ensure {{ruby_version}} is current and default
-  when: ruby_version not in lookup('env', 'RUBY_VERSION')
-  shell: "executable=/usr/local/bin/zsh load_rvm && rvm use default"
+- name: set default ruby
+  when: ! ruby_version in lookup('env', 'RUBY_VERSION')
+  shell: "executable={{shell}} rvm use default"
 
 - name: list rubies
-  when: ruby_install.changed
-  shell: "executable=/usr/local/bin/zsh load_rvm && rvm list strings | grep -v {{ruby_version}}"
+  #when: ruby_install.changed
+  shell: "executable={{shell}} rvm list strings"
   register: rubies
 
+- debug: msg="{{rubies}}"
+
 - name: purge old rubies
-  when: rubies.changed
-  shell: "executable=/usr/local/bin/zsh load_rvm && rvm remove {{item}}"
-  with_items: rubies.stdout_lines
+  when: rubies.stdout_lines | length > 1
+  shell: "executable={{shell}} rvm remove {{item}}"
+  with_items: rubies.stdout_lines[:1]
 
 # NVM
 - name: clone nvm
   git: repo=https://github.com/creationix/nvm.git dest=~/.nvm update=yes
 
-- name: install nodejs version {{node_version}}
-  shell: "executable=/usr/local/bin/zsh load_nvm && nvm install {{node_version}} creates=~/.nvm/{{node_version}}"
-  register: nodejs_install
+- name: install node
+  when: ! node_version in lookup('env', 'NVM_VERSION')
+  shell: "executable={{shell}} nvm install {{node_version}} creates=~/.nvm/{{node_version}}"
+  register: node_install
 
-- name: check nvm alias
-  shell: "executable=/usr/local/bin/zsh load_nvm && nvm alias"
-  register: nvm_alias
-  changed_when: false
-
-- name: make nodejs default
-  shell: "executable=/usr/local/bin/zsh load_nvm && nvm alias default {{node_version}}"
-  register: nvm_default
-  changed_when: '"{{nvm_alias}}" not in nvm_default.stdout'
+- name: make node default
+  when: ! node_version in lookup('env', 'NVM_VERSION')
+  shell: "executable={{shell}} nvm alias default {{node_version}}"
 
 - name: list nodejs installs
-  when: nodejs_install.changed
-  shell: "executable=/usr/local/bin/zsh load_nvm && nvm list | awk '{print $2 }' | grep -Ev '{{node_version}}|>' | strings"
+  when: node_install.changed
+  shell: "executable={{shell}} nvm list | awk '{print $2}' | grep -Ev '{{node_version}}|>|system' | strings"
   register: nvms
 
 - name: purge old nodejs installs
-  when: nvms.changed
-  shell: "executable=/usr/local/bin/zsh load_nvm && nvm uninstall {{item}}"
+  when: nvms | length >= 1
+  shell: "executable={{shell}} nvm uninstall {{item}}"
   with_items: nvms.stdout_lines
-  failed_when: false
 
 # GVM
 - name: install gvm wrapper
-  shell: "executable=/usr/local/bin/zsh curl -sSL https://raw.githubusercontent.com/moovweb/gvm/master/binscripts/gvm-installer | /bin/bash creates=~/.gvm"
+  shell: "executable={{shell}} curl -sSL https://raw.githubusercontent.com/moovweb/gvm/master/binscripts/gvm-installer | {{shell}} creates=~/.gvm"
   ignore_errors: yes
 
-- name: install go version go{{go_version}}
-  shell: "executable=/usr/local/bin/zsh load_gvm && gvm install go{{go_version}} --binary creates=~/.gvm/gos/go{{go_version}}"
-  register: go_install
+- name: install go versions
+  shell: "executable={{shell}} gvm install {{item}} && gvm use {{item}} --default "#creates=~/.gvm/environments/{{item}}"
+  with_items: gvm
 
-- name: make go{{go_version}} default
-  when: go_version not in lookup('env', 'gvm_go_name')
-  shell: "executable=/usr/local/bin/zsh load_gvm && gvm use go{{go_version}} --default"
-  register: gvm_default
-  changed_when: '"Now using version go{{go_version}}" in gvm_default.stdout'
+- name: install gom
+  shell: "executable={{shell}} gvm use {{item}} && go get github.com/mattn/gom"
+  with_items: gvm
 
-- name: list unused go installs
-  when: go_install|changed
-  shell: "executable=/usr/local/bin/zsh load_gvm && gvm list | grep -e go\\[1-9\\] | grep -v \\=\\>"
-  register: go_unused
+- name: install godep
+  shell: "executable={{shell}} gvm use {{item}} && go get github.com/tools/godep"
+  with_items: gvm
 
-- name: remove unused go installs
-  when: go_unused|changed
-  shell: "executable=/usr/local/bin/zsh load_gvm && gvm uninstall {{item}}"
-  with_items: go_unused.stdout_lines
+- name: make {{gvm[1]}} default
+  shell: "executable={{shell}} gvm use {{gvm[1]}} --default"
 
 # Janus
 - name: get janus
   git: repo=https://github.com/carlhuda/janus.git dest=~/.vim update=yes force=yes
+  changed_when: get_janus.before != get_janus.after
   register: get_janus
 
 - name: update janus
-  when: get_janus.changed
-  shell: "executable=/usr/local/bin/zsh chdir=~/.vim rake default -qs"
+  shell: "executable={{shell}} chdir=~/.vim rake default -qs"
 
 # Rust
-# - name: install multirust
-#   shell: "curl -sf https://raw.githubusercontent.com/brson/multirust/master/blastoff.sh | sh"
-#
-# - name: install Rust
-#   command: "/usr/local/bin/multirust update"
+- name: get multirust
+  get_url:
+    url: https://raw.githubusercontent.com/brson/multirust/master/blastoff.sh
+    dest: /tmp/blastoff.sh
+    mode: 0755
+
+- name: install multirust
+  become: yes
+  become_user: "{{lookup('env', 'USER')}}"
+  become_method: sudo
+  expect:
+    creates: /usr/local/bin/multirust
+    command: /tmp/blastoff.sh
+    responses:
+      Ready: Y
+
+- name: update rust
+  command: "/usr/local/bin/multirust update"
