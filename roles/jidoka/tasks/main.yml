@@ -29,12 +29,13 @@
   with_items: pip.modules
 
 # Grab Dotfiles
-- name: Grab dot files
-  get_url: url={{item.url}} dest={{item.dest}}
+- name: grab dot files
+  get_url: url={{item.url}} dest={{item.dest}} force=yes
   with_items:
   - { url: 'https://raw.githubusercontent.com/jkordish/Dotfiles/master/zfunctions',   dest: '~/.zfunctions'  }
   - { url: 'https://raw.githubusercontent.com/jkordish/Dotfiles/master/zshenv-osx',   dest: '~/.zshenv'      }
   - { url: 'https://raw.githubusercontent.com/jkordish/Dotfiles/master/zshrc-osx',    dest: '~/.zshrc'       }
+  - { url: 'https://raw.githubusercontent.com/jkordish/Dotfiles/master/zlogin-osx',   dest: '~/.zlogin'      }
   - { url: 'https://raw.githubusercontent.com/jkordish/Dotfiles/master/tmux.conf',    dest: '~/.tmux.conf'   }
   - { url: 'https://raw.githubusercontent.com/jkordish/Dotfiles/master/vimrc.after',  dest: '~/.vimrc.after' }
 
@@ -70,6 +71,7 @@
   #when: ruby_install.changed
   shell: "executable={{shell}} rvm list strings"
   register: rubies
+  changed_when: false
 
 - name: purge old rubies
   when: rubies.stdout_lines | length > 1
@@ -90,12 +92,13 @@
   shell: "executable={{shell}} nvm alias default {{node_version}}"
 
 - name: list nodejs installs
-  when: node_install.changed
+  # when: node_install.changed
   shell: "executable={{shell}} nvm list | awk '{print $2}' | grep -Ev '{{node_version}}|>|system' | strings"
   register: nvms
+  changed_when: false
 
 - name: purge old nodejs installs
-  when: nvms | length >= 1
+  when: nvms.stdout_lines|length >= 1
   shell: "executable={{shell}} nvm uninstall {{item}}"
   with_items: nvms.stdout_lines
 
@@ -129,25 +132,9 @@
   shell: "executable={{shell}} chdir=~/.vim rake default -qs"
 
 # Rust
-# moved the installation of multirust to homebrew
-# - name: get multirust
-#   get_url:
-#     url: https://raw.githubusercontent.com/brson/multirust/master/blastoff.sh
-#     dest: /tmp/blastoff.sh
-#     mode: 0755
-#
-# - name: install multirust
-#   become: yes
-#   become_user: "{{lookup('env', 'USER')}}"
-#   become_method: sudo
-#   expect:
-#     creates: /usr/local/bin/multirust
-#     command: /tmp/blastoff.sh
-#     responses:
-#       Ready: Y
-
-- name: set default rust toolchain to nightly
-  command: multirust default nightly
+- name: set default rust toolchain
+  when: "rust.default not in lookup('pipe', 'multirust show-default')"
+  command: multirust default {{rust.default}}
 
 - name: update rust
   command: "multirust update"

@@ -4,12 +4,16 @@
   gvm:
     - go1.4.3
     - go1.5.1
+  rust:
+    default: nightly
   shell: "/usr/local/bin/zsh"
   homebrew:
     brews:
+      - coreutils
       - zsh
-      - bash
       - zsh-completions
+      - bash
+      - bash-completion
       - git
       - vim
       - curl
@@ -17,9 +21,9 @@
       - tmux
       - jq
       - mercurial
-      - brew-cask
       - jenv
       - multirust
+      - brew-cask
     casks:
       - atom
       - handbrake
