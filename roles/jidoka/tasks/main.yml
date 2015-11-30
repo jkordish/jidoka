@@ -19,7 +19,8 @@
   with_items: homebrew.casks
 
 - name: atom modules
-  command: apm install {{item}}
+  when: item not in lookup('pipe', 'apm ls --installed --bare')
+  command: apm install -s {{item}}
   with_items: apm.modules
 
 - name: python pip
