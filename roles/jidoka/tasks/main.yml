@@ -138,3 +138,11 @@
 
 - name: update rust
   command: "multirust update {{rust.default}}"
+
+# iterm2 tweaks
+- name: iterm2 tweaks
+  command: "{{item}}"
+  with_items:
+    - /usr/libexec/PlistBuddy -c 'Set :"New Bookmarks":0:"Command" "/usr/local/bin/zsh -l"' ~/Library/Preferences/com.googlecode.iterm2.plist
+    - defaults write com.googlecode.iterm2 ExperimentalOptimizationsEnabled -bool true
+    - defaults write com.googlecode.iterm2 PromptOnQuit -bool false
