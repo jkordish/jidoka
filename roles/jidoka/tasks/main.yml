@@ -137,4 +137,4 @@
   command: multirust default {{rust.default}}
 
 - name: update rust
-  command: "multirust update"
+  command: "multirust update {{rust.default}}"
