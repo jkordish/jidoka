@@ -11,26 +11,26 @@
     - caskroom/fonts
 
 - name: install brews
-  homebrew: name={{item}} update_homebrew=yes upgrade_all=yes state=latest
+  homebrew: name="{{item}}" update_homebrew=yes upgrade_all=yes state=latest
   with_items: homebrew.brews
 
 - name: homebrew cask install software
-  homebrew_cask: name={{item}}
+  homebrew_cask: name="{{item}}"
   with_items: homebrew.casks
 
 - name: atom modules
-  when: item not in lookup('pipe', 'apm ls --installed --bare')
-  command: apm install -s {{item}}
+  when: ! item in lookup('pipe', 'apm ls --installed --bare')
+  command: apm install -s "{{item}}"
   with_items: apm.modules
 
 - name: python pip
   #sudo: yes
-  pip: name={{item}} state=latest executable=/usr/local/bin/pip
+  pip: name="{{item}}" state=latest executable=/usr/local/bin/pip
   with_items: pip.modules
 
 # Grab Dotfiles
 - name: grab dot files
-  get_url: url={{item.url}} dest={{item.dest}} force=yes
+  get_url: url="{{item.url}}" dest="{{item.dest}}" force=yes
   with_items:
   - { url: 'https://raw.githubusercontent.com/jkordish/Dotfiles/master/zfunctions',   dest: '~/.zfunctions'  }
   - { url: 'https://raw.githubusercontent.com/jkordish/Dotfiles/master/zshenv-osx',   dest: '~/.zshenv'      }
@@ -131,13 +131,23 @@
 - name: update janus
   shell: "executable={{shell}} chdir=~/.vim rake default -qs"
 
-# Rust
-- name: set default rust toolchain
-  when: "rust.default not in lookup('pipe', 'multirust show-default')"
-  command: multirust default {{rust.default}}
+# Rustup
+- name: grab rustup
+  when: "'No such file or directory' in lookup('pipe','file ~/.cargo')"
+  get_url: url="https://static.rust-lang.org/rustup/dist/x86_64-apple-darwin/rustup-init" dest="/tmp" mode=0755
+  register: grab_rustup
+
+- name: rustup install
+  command: "creates=~/.cargo/ /tmp/rustup-init -y --no-modify-path --default-toolchain {{rust.default|default('stable')}}"
+  when: grab_rustup|changed
+
+- name: update rustup
+  shell: "executable={{shell}} source ~/.cargo/env && rustup self update"
+  when: grab_rustup|skipped
 
 - name: update rust
-  command: "multirust update {{rust.default}}"
+  shell: "executable={{shell}} source ~/.cargo/env && rustup update {{rust.default|default('stable')}}"
+  when: grab_rustup|skipped
 
 # iterm2 tweaks
 - name: iterm2 tweaks

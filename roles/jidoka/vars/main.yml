@@ -1,9 +1,9 @@
 ---
-  ruby_version: "2.2.3"
-  node_version: "v4.2.2"
+  ruby_version: "2.3.1"
+  node_version: "v6.2.0"
   gvm:
-    - go1.4.3
-    - go1.5.1
+    - go1.4
+    - go1.6
   rust:
     default: nightly
   shell: "/usr/local/bin/zsh"
@@ -22,8 +22,9 @@
       - jq
       - mercurial
       - jenv
-      - multirust
       - brew-cask
+      - awscli
+      - shellcheck
     casks:
       - atom
       - handbrake
@@ -31,14 +32,18 @@
       - spotify
       - vagrant
       - virtualbox
-      - github-desktop
       - hipchat
       - java
       - reggy
-      - tunnelblick
       - vagrant-manager
       - vlc
       - skype
+      - consul
+      - otto
+      - packer
+      - terraform
+      - gpgtools
+      - iterm2-nightly
       - dockertoolbox
       - font-inconsolata
       - font-source-code-pro
@@ -48,25 +53,35 @@
       - virtualenv
       - virtualenv-clone
       - virtualenvwrapper
-      - awscli
   apm:
     modules:
-      - atom-beautify
-      - autocomplete-paths
-      - file-icons
-      - git-control
-      - jsonlint
-      - language-rust
-      - language-scala
-      - language-terraform
-      - linter
-      - linter-js-yaml
-      - linter-rust
-      - linter-scalac
-      - pretty-json
-      - project-manager
-      - racer
-      - sort-lines
-      - tasks
-      - toggle-quotes
-      - vim-mode
+    - atom-beautify
+    - atom-material-syntax
+    - atom-material-ui
+    - autocomplete-paths
+    - build
+    - build-cargo@
+    - conventional-changelog
+    - file-icons
+    - git-control
+    - language-ansible
+    - language-docker
+    - language-rust
+    - language-terraform
+    - linter
+    - linter-ansible-linting
+    - linter-docker
+    - linter-golinter
+    - linter-js-yaml
+    - linter-jsonlint
+    - linter-markdown
+    - linter-rust
+    - linter-shellcheck
+    - project-manager
+    - racer
+    - refactor
+    - sort-lines
+    - tasks
+    - toggle-quotes
+    - tool-bar
+    - vim-mode
