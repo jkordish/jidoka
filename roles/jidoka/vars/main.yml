@@ -45,6 +45,9 @@
       - gpgtools
       - iterm2-nightly
       - dockertoolbox
+      - box-sync
+      - tresorit
+      - bartender
       - font-inconsolata
       - font-source-code-pro
       - font-terminus
