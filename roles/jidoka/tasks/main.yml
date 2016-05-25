@@ -1,7 +1,7 @@
 ---
 # Homebrew work
 - name: Install Homebrew
-  shell: "ruby -e $(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install) creates=/usr/local/bin/brew"
+  shell: "curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install | ruby -e creates=/usr/local/bin/brew"
   register: brew_install
 
 - name: homebrew tap cask/fonts
@@ -9,6 +9,7 @@
   with_items:
     - caskroom/cask
     - caskroom/fonts
+    - caskroom/versions
 
 - name: install brews
   homebrew: name="{{item}}" update_homebrew=yes upgrade_all=yes state=latest
@@ -20,6 +21,7 @@
 
 - name: atom modules
   when: ! item in lookup('pipe', 'apm ls --installed --bare')
+  when: lookup('pipe', 'apm ls --installed --bare')|length <=0
   command: apm install -s "{{item}}"
   with_items: apm.modules
 
@@ -48,7 +50,7 @@
 
 # RVM
 - name: install rvm
-  when: ! lookup('env','rvm_version')
+  when: ! lookup('env','rvm_version')|length <= 0
   shell: "curl -sSL https://get.rvm.io | /bin/bash -s stable --ruby={{ruby_version}} --ignore-dotfiles --autolibs=4 creates=~/.rvm"
   register: rvm_install
 
@@ -83,12 +85,12 @@
   git: repo=https://github.com/creationix/nvm.git dest=~/.nvm update=yes
 
 - name: install node
-  when: ! node_version in lookup('env', 'NVM_VERSION')
+  when: node_version not in lookup('env', 'NVM_VERSION')
   shell: "executable={{shell}} nvm install {{node_version}} creates=~/.nvm/{{node_version}}"
   register: node_install
 
 - name: make node default
-  when: ! node_version in lookup('env', 'NVM_VERSION')
+  when: node_version not in lookup('env', 'NVM_VERSION')
   shell: "executable={{shell}} nvm alias default {{node_version}}"
 
 - name: list nodejs installs
@@ -108,7 +110,7 @@
   ignore_errors: yes
 
 - name: install go versions
-  shell: "executable={{shell}} gvm install {{item}} && gvm use {{item}} --default creates=~/.gvm/environments/{{item}}"
+  shell: "executable={{shell}} gvm install {{item}} {% if item == 'go1.4' %} -B {% endif %}&& gvm use {{item}} --default creates=~/.gvm/environments/{{item}}"
   with_items: gvm
 
 - name: install gom
@@ -134,11 +136,11 @@
 # Rustup
 - name: grab rustup
   when: "'No such file or directory' in lookup('pipe','file ~/.cargo')"
-  get_url: url="https://static.rust-lang.org/rustup/dist/x86_64-apple-darwin/rustup-init" dest="/tmp" mode=0755
+  get_url: url="https://static.rust-lang.org/rustup/dist/x86_64-apple-darwin/rustup-init" dest="~/Downloads/" mode=0755
   register: grab_rustup
 
 - name: rustup install
-  command: "creates=~/.cargo/ /tmp/rustup-init -y --no-modify-path --default-toolchain {{rust.default|default('stable')}}"
+  command: "creates=~/.cargo/ ~/Downloads/rustup-init -y --no-modify-path --default-toolchain {{rust.default|default('stable')}}"
   when: grab_rustup|changed
 
 - name: update rustup
